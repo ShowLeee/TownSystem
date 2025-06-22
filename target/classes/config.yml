@@ -1,0 +1,68 @@
+buildings:
+  townhall:
+    display-name: "§6Ратуша"
+    max-level: 5
+    unlocks:
+      - "mine"
+      - "farm"
+      - "wizard_tower"
+    requirements:
+      command:
+        - "town.leader"
+      levels:
+        1:
+          items:
+            - "OAK_LOG:64"
+            - "STONE:128"
+            - "IRON_INGOT:32"
+          money: 1000
+          permissions: []
+        2:
+          items:
+            - "SPRUCE_LOG:64"
+            - "COBBLESTONE:128"
+            - "GOLD_INGOT:32"
+          money: 2500
+          permissions: []
+
+  mine:
+    display-name: "§7Шахта"
+    max-level: 3
+    unlocks: []
+    requirements:
+      command: []
+      levels:
+        1:
+          items:
+            - "IRON_PICKAXE:1"
+            - "TORCH:32"
+          money: 500
+          permissions: []
+
+  farm:
+    display-name: "§aФерма"
+    max-level: 3
+    unlocks: []
+    requirements:
+      command: []
+      levels:
+        1:
+          items:
+            - "WHEAT_SEEDS:64"
+            - "WOODEN_HOE:1"
+          money: 300
+          permissions: []
+
+  wizard_tower:
+    display-name: "§5Башня чародея"
+    max-level: 4
+    unlocks: []
+    requirements:
+      command: []
+      levels:
+        1:
+          items:
+            - "ENCHANTING_TABLE:1"
+            - "BOOKSHELF:16"
+          money: 1500
+          permissions: []

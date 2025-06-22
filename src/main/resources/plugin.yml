@@ -1,0 +1,19 @@
+name: TownSystem
+version: '1.0-SNAPSHOT'
+main: org.showlee.townSystem.TownSystem
+api-version: '1.21'
+description: Плагин для системы улучшения городских построек через сбор ресурсов
+author: ShowLee
+commands:
+  townhall:
+    description: Выдает блок ратуши или управляет плагином
+    usage: /townhall [reload]
+    permission: townsystem.command.townhall
+    permission-message: У вас нет прав на использование этой команды!
+permissions:
+  townsystem.command.townhall:
+    description: Позволяет использовать команду /townhall
+    default: true
+  townsystem.admin:
+    description: Дает доступ к админ-командам плагина
+    default: op
