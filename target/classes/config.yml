@@ -1,103 +1,68 @@
-# Настройки системы зданий
-buildings:
-  # Основное здание - Ратуша
-  townhall:
-    display-name: "&6Ратуша"  # Отображаемое название
-    material: "END_STONE"     # Материал блока
-    max-level: 5              # Максимальный уровень улучшения
-    hits-to-break: 10         # Количество ударов для разрушения
-    base-health: 100          # Здоровье здания (опционально)
-    
-    # Разблокируемые здания при достижении 1 уровня
-    unlocks:
-      - "mine"
-      - "farm"
-      - "wizard_tower"
-    
-    # Требования для улучшения по уровням
-    requirements:
-      # Командные требования (например, права)
-      command:
-        - "town.mayor"
-      
-      # Требования по уровням
-      levels:
-        1:  # Для перехода с 0 на 1 уровень
-          items:  # Необходимые предметы
-            - "OAK_LOG:64"
-            - "STONE:128"
-            - "IRON_INGOT:32"
-          money: 1000  # Требуемая сумма денег
-          permissions: []  # Необходимые права
-        
-        2:  # Для перехода с 1 на 2 уровень
-          items:
-            - "SPRUCE_LOG:64"
-            - "COBBLESTONE:128"
-            - "GOLD_INGOT:16"
-          money: 2500
-          permissions:
-            - "town.council"
+# Настройки плагина TownSystem
 
-  # Шахта
+# Основные настройки
+settings:
+  # Название предмета Ратуши (используется в выдаче и меню)
+  building-item-name: "&6Ратуша"
+
+  # Радиус защиты вокруг зданий (в блоках)
+  protection-radius: 10
+
+  # Можно ли разрушать здания других команд
+  allow-destroy-other-teams: true
+
+# Настройки команд
+teams:
+  red:
+    display_name: "&cКрасная команда"
+    color: RED
+  blue:
+    display_name: "&9Синяя команда"
+    color: BLUE
+  green:
+    display_name: "&aЗеленая команда"
+    color: GREEN
+
+# Настройки уровней зданий
+building-levels:
+  townhall:
+    0:
+      # Ресурсы для перехода на 1 уровень
+      required-resources:
+        STONE: 64
+        OAK_LOG: 32
+        IRON_INGOT: 16
+      # Награда за улучшение
+      reward:
+        - "minecraft:emerald 5"
+        - "townsystem:mine_block 1"
+    1:
+      required-resources:
+        COBBLESTONE: 128
+        IRON_INGOT: 32
+        GOLD_INGOT: 8
+      reward:
+        - "minecraft:emerald 10"
+        - "townsystem:magic_tower_block 1"
+
+# Настройки других зданий (шаблон)
+buildings:
   mine:
     display-name: "&7Шахта"
-    material: "COBBLESTONE"
-    max-level: 3
-    hits-to-break: 8
-    base-health: 60
-    requirements:
-      levels:
-        1:
-          items:
-            - "IRON_PICKAXE:1"
-            - "TORCH:32"
-          money: 500
-
-  # Ферма
+    item-material: "IRON_PICKAXE"
   farm:
     display-name: "&aФерма"
-    material: "HAY_BLOCK"
-    max-level: 3
-    hits-to-break: 5
-    requirements:
-      levels:
-        1:
-          items:
-            - "WHEAT_SEEDS:64"
-            - "WOODEN_HOE:1"
-          money: 300
+    item-material: "GOLDEN_HOE"
+  magic_tower:
+    display-name: "&5Башня чародея"
+    item-material: "ENCHANTING_TABLE"
 
-  # Башня чародея
-  wizard_tower:
-    display-name: "&5Башня Чародея"
-    material: "ENCHANTING_TABLE"
-    max-level: 4
-    hits-to-break: 12
-    requirements:
-      levels:
-        1:
-          items:
-            - "BOOKSHELF:16"
-            - "LAPIS_LAZULI:32"
-          money: 1500
-
-# Настройки системы разрушения
-breaking-system:
-  damage-per-hit: 10          # Урон за 1 удар
-  particle: "BLOCK_CRACK"     # Частицы при ударе
-  sound: "BLOCK_STONE_HIT"    # Звук при ударе
-  rebuild-cooldown: 300       # Время (в секундах) до автоматического восстановления
-
-# Настройки сообщений
+# Сообщения
 messages:
-  not-owner: "&cТолько владелец может улучшать это здание!"
-  not-enough-resources: "&cНедостаточно ресурсов для улучшения!"
-  building-upgraded: "&aЗдание улучшено до уровня {level}!"
-  building-damaged: "&eПрогресс разрушения: &c{current}&e/&a{max}"
-  building-destroyed: "&4Здание разрушено!"
-
-# Настройки для администраторов
-admin-settings:
-  bypass-protection: false    # Могут ли админы пропускать защиту
-  instant-build: false        # Могут ли мгновенно строить
+  no-permission: "&cУ вас нет прав на эту команду!"
+  not-in-team: "&cВы должны состоять в команде!"
+  building-placed: "&aВы установили здание для команды %team%"
+  building-destroyed: "&aВы разрушили здание команды %team%"
+  chest-protected: "&cЭтот сундук защищен командой %team%!"
+  level-up: "&aЗдание улучшено до уровня %level%!"
+  resources-needed: "&eТребуется для улучшения:"

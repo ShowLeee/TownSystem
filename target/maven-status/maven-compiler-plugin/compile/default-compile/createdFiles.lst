@@ -1,7 +1,7 @@
 org\showlee\townSystem\TownBuilding.class
-org\showlee\townSystem\TownSystem$MenuHolder.class
 org\showlee\townSystem\BuildingData.class
 org\showlee\townSystem\BuildingLevel.class
 org\showlee\townSystem\MenuHolder.class
+org\showlee\townSystem\GiveRatushaCommand.class
 org\showlee\townSystem\TownSystem.class
 org\showlee\townSystem\LocationUtil.class

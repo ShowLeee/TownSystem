@@ -4,28 +4,54 @@ import org.bukkit.Location;
 import java.util.UUID;
 
 public class BuildingData {
-    private final String buildingId;
+    private String type;
     private int level;
-    private final UUID owner;
-    private final Location location;
-    private int hitsTaken;
+    private UUID owner;
+    private Location location;
+    private String team;
 
-    public BuildingData(String buildingId, int level, UUID owner, Location location) {
-        this.buildingId = buildingId;
-        this.level = level;
-        this.owner = owner;
-        this.location = location;
-        this.hitsTaken = 0;
+    // Конструктор по умолчанию
+    public BuildingData() {
     }
 
     // Геттеры и сеттеры
-    public String getBuildingId() { return buildingId; }
-    public int getLevel() { return level; }
-    public UUID getOwner() { return owner; }
-    public Location getLocation() { return location; }
-    public int getHitsTaken() { return hitsTaken; }
+    public String getType() {
+        return type;
+    }
 
-    public void setLevel(int level) { this.level = level; }
-    public void incrementHits() { hitsTaken++; }
-    public void resetHits() { hitsTaken = 0; }
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
+    public UUID getOwner() {
+        return owner;
+    }
+
+    public void setOwner(UUID owner) {
+        this.owner = owner;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
+    }
+
+    public String getTeam() {
+        return team;
+    }
+
+    public void setTeam(String team) {
+        this.team = team;
+    }
 }
