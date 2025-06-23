@@ -16,6 +16,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.Team;
+import org.showlee.townSystem.buildings.TownHall;
 
 import java.util.*;
 
@@ -39,31 +40,20 @@ public class TownBuilding implements Listener {
         if (!item.hasItemMeta() || !item.getItemMeta().hasDisplayName()) return;
 
         String displayName = item.getItemMeta().getDisplayName();
-        Player player = event.getPlayer();
 
-        Team team = event.getPlayer().getScoreboard().getPlayerTeam(event.getPlayer());
-        if (team == null) {
-            player.sendMessage(ChatColor.RED + "Вы должны состоять в команде для установки зданий!");
-            event.setCancelled(true);
-            return;
+        // Размещение ратуши
+        if (displayName.equals(ChatColor.GOLD + "Ратуша")) {
+            Team team = event.getPlayer().getScoreboard().getPlayerTeam(event.getPlayer());
+            TownHall townHall = new TownHall(
+                    event.getBlock().getLocation(),
+                    team != null ? team.getName() : null
+            );
+
+            plugin.getBuildingManager().addBuilding(event.getBlock().getLocation(), townHall);
+            event.getPlayer().sendMessage(ChatColor.GREEN + "Ратуша успешно построена!");
         }
 
-        if (item.getItemMeta().getDisplayName().equals(plugin.getBuildingItemName())) {
-            Block block = event.getBlock();
-            BuildingData data = new BuildingData();
-            data.setType("townhall");
-            data.setLevel(0);
-            data.setLocation(block.getLocation());
-
-            if (team != null) {
-                data.setTeam(team.getName());
-            }
-            plugin.addBuildingData(block.getLocation(), data);
-            initBuildingHP(block);
-            player.sendMessage(ChatColor.GREEN + "Вы установили Ратушу для команды " +
-                    plugin.getTeamDisplayName(team.getName()));
-
-        }
+        // Здесь можно добавить обработку других зданий
     }
     private void startBossBarUpdater() {
         // Обновляем видимость боссбаров каждую секунду

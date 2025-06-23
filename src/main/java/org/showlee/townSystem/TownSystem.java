@@ -4,6 +4,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.ChatColor;
 
@@ -15,12 +16,15 @@ public class TownSystem extends JavaPlugin {
     private Map<Location, BuildingData> buildingDataMap = new HashMap<>();
     private Map<String, String> teamDisplayNames = new HashMap<>();
     private String buildingItemName;
+    private BuildingManager buildingManager;
 
     @Override
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
         reloadConfig();
+
+        buildingManager = new BuildingManager();
         Objects.requireNonNull(this.getCommand("giveratusha")).setExecutor(new GiveRatushaCommand(this));
         // Загрузка настроек
 
@@ -50,11 +54,16 @@ public class TownSystem extends JavaPlugin {
     public static TownSystem getInstance() {
         return instance;
     }
-
+    public BuildingManager getBuildingManager() {
+        return buildingManager;
+    }
     public String getBuildingItemName() {
         return buildingItemName;
     }
-
+    public ItemStack getBuildingItem(String type) {
+        // Возвращает ItemStack для указанного типа здания
+        return null;
+    }
     public String getTeamDisplayName(String team) {
         return teamDisplayNames.getOrDefault(team, team);
     }
