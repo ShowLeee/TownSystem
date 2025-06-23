@@ -24,39 +24,38 @@ teams:
     color: GREEN
 
 # Настройки уровней зданий
-building-levels:
-  townhall:
-    0:
-      # Ресурсы для перехода на 1 уровень
-      required-resources:
-        STONE: 64
-        OAK_LOG: 32
-        IRON_INGOT: 16
-      # Награда за улучшение
-      reward:
-        - "minecraft:emerald 5"
-        - "townsystem:mine_block 1"
-    1:
-      required-resources:
-        COBBLESTONE: 128
-        IRON_INGOT: 32
-        GOLD_INGOT: 8
-      reward:
-        - "minecraft:emerald 10"
-        - "townsystem:magic_tower_block 1"
-
-# Настройки других зданий (шаблон)
 buildings:
-  mine:
-    display-name: "&7Шахта"
-    item-material: "IRON_PICKAXE"
-  farm:
-    display-name: "&aФерма"
-    item-material: "GOLDEN_HOE"
-  magic_tower:
-    display-name: "&5Башня чародея"
-    item-material: "ENCHANTING_TABLE"
+  townhall:
+    display-name: "&6Ратуша"
+    levels:
+      0:
+        display-name: "&7Деревянная ратуша"
+        resources:
+          STONE: 64
+          OAK_LOG: 32
+          IRON_INGOT: 16
+        rewards:
+          EMERALD: 5
+          IRON_PICKAXE: 1
+      1:
+        display-name: "&fКаменная ратуша"
+        resources:
+          COBBLESTONE: 128
+          IRON_INGOT: 32
+          GOLD_INGOT: 8
+        rewards:
+          EMERALD: 10
+          DIAMOND: 2
 
+material-names:
+  STONE: "Камень"
+  OAK_LOG: "Дубовые бревна"
+  IRON_INGOT: "Железные слитки"
+  EMERALD: "Изумруд"
+  IRON_PICKAXE: "Железная кирка"
+  COBBLESTONE: "Булыжник"
+  GOLD_INGOT: "Золотой слиток"
+  DIAMOND: "Алмаз"
 # Сообщения
 messages:
   no-permission: "&cУ вас нет прав на эту команду!"
