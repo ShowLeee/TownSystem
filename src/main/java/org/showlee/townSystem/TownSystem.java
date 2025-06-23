@@ -158,14 +158,63 @@ public class TownSystem extends JavaPlugin implements Listener {
         Inventory menu = Bukkit.createInventory(new MenuHolder(), 27,
                 building.getDisplayName() + " Ур. " + nextLevel);
 
-        // Заполнение GUI (ваш код)
-        // ... остальная часть метода
+        // Границы
+        ItemStack border = createGuiItem(Material.BLACK_STAINED_GLASS_PANE, " ");
+        for (int i = 0; i < 27; i++) {
+            if (i < 9 || i > 17 || i % 9 == 0 || i % 9 == 8) {
+                menu.setItem(i, border);
+            }
+        }
+
+        // Информация
+        menu.setItem(4, createGuiItem(Material.BOOK,
+                ChatColor.GOLD + "Требования для улучшения",
+                ChatColor.GRAY + "Текущий уровень: " + ChatColor.YELLOW + data.getLevel(),
+                ChatColor.GRAY + "Следующий уровень: " + ChatColor.GREEN + nextLevel));
+
+        // Требуемые ресурсы
+        int slot = 10;
+        for (Map.Entry<Material, Integer> entry : requirements.getRequiredItems().entrySet()) {
+            Material mat = entry.getKey();
+            int required = entry.getValue();
+            int has = countItems(player, mat);
+
+            ChatColor color = has >= required ? ChatColor.GREEN : ChatColor.RED;
+            ItemStack item = new ItemStack(mat);
+            ItemMeta meta = item.getItemMeta();
+            meta.setDisplayName(ChatColor.RESET + mat.toString());
+
+            List<String> lore = new ArrayList<>();
+            lore.add(ChatColor.GRAY + "Нужно: " + color + required);
+            lore.add(ChatColor.GRAY + "Есть: " + color + has);
+            meta.setLore(lore);
+
+            item.setItemMeta(meta);
+            item.setAmount(Math.min(64, required));
+            menu.setItem(slot++, item);
+        }
+
+        // Кнопка улучшения
+        boolean canUpgrade = canUpgrade(player, requirements);
+        Material buttonMat = canUpgrade ? Material.LIME_CONCRETE : Material.RED_CONCRETE;
+        String buttonName = canUpgrade ? ChatColor.GREEN + "Улучшить!" : ChatColor.RED + "Недостаточно ресурсов";
+
+        menu.setItem(22, createGuiItem(buttonMat, buttonName,
+                ChatColor.GRAY + "Нажмите для улучшения до",
+                ChatColor.GRAY + "уровня " + nextLevel));
 
         player.openInventory(menu);
         activeSessions.put(player.getUniqueId(), data.getLocation());
         getLogger().info("Меню открыто для " + player.getName());
     }
-
+    private ItemStack createGuiItem(Material material, String name, String... lore) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(name);
+        meta.setLore(Arrays.asList(lore));
+        item.setItemMeta(meta);
+        return item;
+    }
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) {
