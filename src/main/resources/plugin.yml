@@ -8,3 +8,9 @@ commands:
   giveratusha:
     description: Выдать блок Ратуши
     usage: /giveratusha
+events:
+  - BlockDamageEvent
+  - BlockBreakEvent
+  - PlayerInteractEvent
+  - PlayerMoveEvent
+  - PlayerQuitEvent

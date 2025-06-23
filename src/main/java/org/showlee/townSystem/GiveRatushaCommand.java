@@ -32,7 +32,7 @@ public class GiveRatushaCommand implements CommandExecutor {
         }
 
         // Создание блока Ратуши
-        ItemStack ratushaItem = new ItemStack(Material.STRUCTURE_BLOCK);
+        ItemStack ratushaItem = new ItemStack(Material.END_STONE);
         ItemMeta meta = ratushaItem.getItemMeta();
 
         // Установка названия из конфига

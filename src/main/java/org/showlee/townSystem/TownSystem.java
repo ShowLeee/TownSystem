@@ -44,6 +44,7 @@ public class TownSystem extends JavaPlugin {
     @Override
     public void onDisable() {
         saveBuildingData();
+
     }
 
     public static TownSystem getInstance() {
@@ -57,7 +58,9 @@ public class TownSystem extends JavaPlugin {
     public String getTeamDisplayName(String team) {
         return teamDisplayNames.getOrDefault(team, team);
     }
-
+    public boolean isProgressiveBreakingEnabled() {
+        return getConfig().getBoolean("block-breaking.enabled", true);
+    }
     public void addBuildingData(Location location, BuildingData data) {
         buildingDataMap.put(location, data);
     }

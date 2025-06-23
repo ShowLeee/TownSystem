@@ -27,6 +27,15 @@ teams:
 buildings:
   townhall:
     display-name: "&6Ратуша"
+    material: END_STONE
+    max-hp: 100
+    hp-bar:
+      visible: true
+      title: "&cПрочность здания: {hp}/{max_hp}"
+      color: RED
+      style: SEGMENTED_20
+    break-sound: ENTITY_IRON_GOLEM_DAMAGE
+    destroy-sound: ENTITY_IRON_GOLEM_DEATH
     levels:
       0:
         display-name: "&7Деревянная ратуша"
@@ -46,7 +55,8 @@ buildings:
         rewards:
           EMERALD: 10
           DIAMOND: 2
-          
+
+
 material-names:
   STONE: "Камень"
   OAK_LOG: "Дубовые бревна"
