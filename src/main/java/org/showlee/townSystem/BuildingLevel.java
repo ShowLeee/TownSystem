@@ -1,10 +1,7 @@
 package org.showlee.townSystem;
 
-
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.*;
 
 public class BuildingLevel {
@@ -12,16 +9,14 @@ public class BuildingLevel {
     private final int requiredMoney;
     private final List<String> requiredPermissions;
 
-    public BuildingLevel(@NotNull Map<Material, Integer> requiredItems,
-                         int requiredMoney,
-                         @NotNull List<String> requiredPermissions) {
+    public BuildingLevel(Map<Material, Integer> requiredItems, int requiredMoney,
+                         List<String> requiredPermissions) {
         this.requiredItems = requiredItems;
         this.requiredMoney = requiredMoney;
         this.requiredPermissions = requiredPermissions;
     }
 
-    public static @NotNull Map<Integer, BuildingLevel> loadLevelsFromConfig(
-            @NotNull ConfigurationSection levelsConfig) {
+    public static Map<Integer, BuildingLevel> loadLevelsFromConfig(ConfigurationSection levelsConfig) {
         Map<Integer, BuildingLevel> levels = new HashMap<>();
         if (levelsConfig == null) return levels;
 
@@ -45,7 +40,7 @@ public class BuildingLevel {
     }
 
     // Геттеры
-    public @NotNull Map<Material, Integer> getRequiredItems() { return requiredItems; }
+    public Map<Material, Integer> getRequiredItems() { return requiredItems; }
     public int getRequiredMoney() { return requiredMoney; }
-    public @NotNull List<String> getRequiredPermissions() { return requiredPermissions; }
+    public List<String> getRequiredPermissions() { return requiredPermissions; }
 }

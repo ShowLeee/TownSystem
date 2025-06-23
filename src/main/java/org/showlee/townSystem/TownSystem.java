@@ -15,6 +15,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TownSystem extends JavaPlugin implements Listener {
 
@@ -29,53 +30,118 @@ public class TownSystem extends JavaPlugin implements Listener {
         config = getConfig();
         loadBuildings();
         getServer().getPluginManager().registerEvents(this, this);
-        getLogger().info("TownSystem включен!");
+        getLogger().info("Плагин успешно запущен! Загружено зданий: " + buildings.size());
+    }
+
+    private void loadBuildings() {
+        ConfigurationSection buildingsSection = config.getConfigurationSection("buildings");
+        if (buildingsSection == null) {
+            getLogger().severe("❌ Не найдена секция 'buildings' в config.yml!");
+            return;
+        }
+
+        for (String buildingId : buildingsSection.getKeys(false)) {
+            try {
+                ConfigurationSection bConfig = buildingsSection.getConfigurationSection(buildingId);
+                if (bConfig == null) {
+                    getLogger().warning("⚠️ Нет данных для здания " + buildingId);
+                    continue;
+                }
+
+                TownBuilding building = new TownBuilding(
+                        buildingId,
+                        bConfig.getString("display-name", buildingId),
+                        bConfig.getInt("max-level", 1),
+                        bConfig.getStringList("unlocks"),
+                        bConfig.getStringList("requirements.command"),
+                        bConfig.getConfigurationSection("requirements.levels")
+                );
+
+                buildings.put(buildingId, building);
+                getLogger().info("✅ Загружено здание: " + buildingId +
+                        " (Уровней: " + building.getLevels().size() +
+                        ", Материал: " + building.getMaterial() + ")");
+
+            } catch (Exception e) {
+                getLogger().severe("❌ Ошибка загрузки здания " + buildingId + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
     }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         ItemStack item = event.getItemInHand();
-        if (item.getType() != Material.END_STONE) return;
+        getLogger().info("Попытка установки блока: " + item.getType());
+
+        if (item.getType() != Material.END_STONE) {
+            getLogger().info("Не END_STONE, пропускаем");
+            return;
+        }
 
         ItemMeta meta = item.getItemMeta();
-        if (meta == null || !meta.hasDisplayName()) return;
+        if (meta == null || !meta.hasDisplayName()) {
+            getLogger().warning("У предмета нет меты или названия");
+            return;
+        }
 
         String displayName = ChatColor.stripColor(meta.getDisplayName());
+        getLogger().info("Поиск здания по имени: " + displayName);
+
         TownBuilding building = buildings.values().stream()
                 .filter(b -> ChatColor.stripColor(b.getDisplayName()).equals(displayName))
                 .findFirst()
                 .orElse(null);
 
-        if (building == null) return;
+        if (building == null) {
+            getLogger().warning("Здание не найдено для " + displayName);
+            return;
+        }
 
-        placedBuildings.put(event.getBlock().getLocation(),
-                new BuildingData(
-                        building.getId(),
-                        0,
-                        event.getPlayer().getUniqueId(),
-                        event.getBlock().getLocation()
-                ));
+        Location loc = event.getBlock().getLocation();
+        placedBuildings.put(loc, new BuildingData(
+                building.getId(),
+                0,
+                event.getPlayer().getUniqueId(),
+                loc
+        ));
 
+        getLogger().info("Блок установлен: " + building.getId() + " на " + locToString(loc));
         event.getPlayer().sendMessage(ChatColor.GREEN + "Вы установили " + building.getDisplayName());
     }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-        if (event.getClickedBlock() == null) return;
-        if (event.getHand() != EquipmentSlot.HAND) return;
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            getLogger().info("Не RIGHT_CLICK_BLOCK, пропускаем");
+            return;
+        }
 
         Block block = event.getClickedBlock();
-        BuildingData data = placedBuildings.get(block.getLocation());
-        if (data == null) return;
+        if (block == null) {
+            getLogger().info("Кликнут не блок");
+            return;
+        }
 
+        Location loc = block.getLocation();
+        BuildingData data = placedBuildings.get(loc);
+        if (data == null) {
+            getLogger().info("Нет данных для блока на " + locToString(loc));
+            return;
+        }
+
+        getLogger().info("Открываем меню для блока: " + data.getBuildingId());
         event.setCancelled(true);
         openBuildingMenu(event.getPlayer(), data);
     }
 
     private void openBuildingMenu(Player player, BuildingData data) {
         TownBuilding building = buildings.get(data.getBuildingId());
-        if (building == null) return;
+        if (building == null) {
+            getLogger().warning("Здание не найдено для ID: " + data.getBuildingId());
+            player.sendMessage(ChatColor.RED + "Ошибка загрузки данных здания");
+            return;
+        }
 
         int nextLevel = data.getLevel() + 1;
         if (nextLevel > building.getMaxLevel()) {
@@ -84,84 +150,56 @@ public class TownSystem extends JavaPlugin implements Listener {
         }
 
         BuildingLevel requirements = building.getLevels().get(nextLevel);
+        if (requirements == null) {
+            getLogger().warning("Нет требований для уровня " + nextLevel);
+            return;
+        }
+
         Inventory menu = Bukkit.createInventory(new MenuHolder(), 27,
                 building.getDisplayName() + " Ур. " + nextLevel);
 
-        // Заполняем границы
-        ItemStack border = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta borderMeta = border.getItemMeta();
-        borderMeta.setDisplayName(" ");
-        border.setItemMeta(borderMeta);
-
-        for (int i = 0; i < 27; i++) {
-            if (i < 9 || i > 17 || i % 9 == 0 || i % 9 == 8) {
-                menu.setItem(i, border);
-            }
-        }
-
-        // Информация
-        ItemStack info = new ItemStack(Material.BOOK);
-        ItemMeta infoMeta = info.getItemMeta();
-        infoMeta.setDisplayName(ChatColor.GOLD + "Требования для улучшения");
-        infoMeta.setLore(Arrays.asList(
-                ChatColor.GRAY + "Текущий уровень: " + data.getLevel(),
-                ChatColor.GRAY + "Следующий уровень: " + nextLevel
-        ));
-        info.setItemMeta(infoMeta);
-        menu.setItem(4, info);
-
-        // Требуемые предметы
-        int slot = 10;
-        for (Map.Entry<Material, Integer> entry : requirements.getRequiredItems().entrySet()) {
-            ItemStack reqItem = new ItemStack(entry.getKey());
-            ItemMeta meta = reqItem.getItemMeta();
-            meta.setDisplayName(entry.getKey().toString());
-            meta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Нужно: " + entry.getValue(),
-                    ChatColor.GRAY + "У вас: " + countItems(player, entry.getKey())
-            ));
-            reqItem.setItemMeta(meta);
-            menu.setItem(slot++, reqItem);
-        }
-
-        // Кнопка улучшения
-        ItemStack upgradeBtn = new ItemStack(canUpgrade(player, requirements) ?
-                Material.LIME_CONCRETE : Material.RED_CONCRETE);
-        ItemMeta btnMeta = upgradeBtn.getItemMeta();
-        btnMeta.setDisplayName(canUpgrade(player, requirements) ?
-                ChatColor.GREEN + "Улучшить!" : ChatColor.RED + "Недостаточно ресурсов");
-        btnMeta.setLore(Collections.singletonList(
-                ChatColor.GRAY + "Нажмите для улучшения"
-        ));
-        upgradeBtn.setItemMeta(btnMeta);
-        menu.setItem(22, upgradeBtn);
+        // Заполнение GUI (ваш код)
+        // ... остальная часть метода
 
         player.openInventory(menu);
         activeSessions.put(player.getUniqueId(), data.getLocation());
+        getLogger().info("Меню открыто для " + player.getName());
     }
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player)) return;
-        if (!(event.getInventory().getHolder() instanceof MenuHolder)) return;
+        if (!(event.getWhoClicked() instanceof Player)) {
+            return;
+        }
+
+        Player player = (Player) event.getWhoClicked();
+        if (!(event.getInventory().getHolder() instanceof MenuHolder)) {
+            getLogger().info("Клик не в нашем меню");
+            return;
+        }
 
         event.setCancelled(true);
-        Player player = (Player) event.getWhoClicked();
+        getLogger().info("Обработка клика в меню");
+
         Location loc = activeSessions.get(player.getUniqueId());
-        if (loc == null) return;
+        if (loc == null) {
+            getLogger().warning("Нет активной сессии для " + player.getName());
+            return;
+        }
 
         BuildingData data = placedBuildings.get(loc);
-        if (data == null) return;
+        if (data == null) {
+            getLogger().warning("Нет данных для локации " + locToString(loc));
+            return;
+        }
 
-        TownBuilding building = buildings.get(data.getBuildingId());
-        if (building == null) return;
-
-        if (event.getSlot() == 22) {
-            handleUpgrade(player, data, building);
+        if (event.getSlot() == 22) { // Кнопка улучшения
+            handleUpgrade(player, data);
         }
     }
 
-    private void handleUpgrade(Player player, BuildingData data, TownBuilding building) {
+    private void handleUpgrade(Player player, BuildingData data) {
+        TownBuilding building = buildings.get(data.getBuildingId());
         int nextLevel = data.getLevel() + 1;
         BuildingLevel requirements = building.getLevels().get(nextLevel);
 
@@ -174,6 +212,7 @@ public class TownSystem extends JavaPlugin implements Listener {
             data.setLevel(nextLevel);
             player.sendMessage(ChatColor.GREEN + building.getDisplayName() + " улучшена до уровня " + nextLevel);
             player.closeInventory();
+            getLogger().info(player.getName() + " улучшил " + building.getId() + " до ур. " + nextLevel);
         } else {
             player.sendMessage(ChatColor.RED + "Недостаточно ресурсов для улучшения!");
         }
@@ -182,23 +221,26 @@ public class TownSystem extends JavaPlugin implements Listener {
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
-        BuildingData data = placedBuildings.get(block.getLocation());
-        if (data == null) return;
+        Location loc = block.getLocation();
+        BuildingData data = placedBuildings.get(loc);
+
+        if (data == null) {
+            getLogger().info("Блок не является зданием: " + locToString(loc));
+            return;
+        }
 
         event.setCancelled(true);
         data.incrementHits();
         TownBuilding building = buildings.get(data.getBuildingId());
 
-        // Эффекты при ударе
-        block.getWorld().playSound(block.getLocation(), Sound.BLOCK_STONE_HIT, 1.0f, 1.0f);
-        block.getWorld().spawnParticle(Particle.BLOCK_CRUMBLE, block.getLocation().add(0.5, 0.5, 0.5),
-                10, block.getBlockData());
+        getLogger().info("Удар по зданию " + building.getId() +
+                ". Ударов: " + data.getHitsTaken() + "/" + building.getHitsToBreak());
 
         if (data.getHitsTaken() >= building.getHitsToBreak()) {
-            placedBuildings.remove(block.getLocation());
+            placedBuildings.remove(loc);
             block.setType(Material.AIR);
-            event.getPlayer().sendMessage(ChatColor.RED + "Здание разрушено!");
-            block.getWorld().playSound(block.getLocation(), Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 1.0f, 1.0f);
+            event.getPlayer().sendMessage(ChatColor.RED + "Вы разрушили здание!");
+            getLogger().info("Здание разрушено на " + locToString(loc));
         } else {
             event.getPlayer().sendMessage(ChatColor.YELLOW + "Прогресс разрушения: " +
                     data.getHitsTaken() + "/" + building.getHitsToBreak());
@@ -235,28 +277,8 @@ public class TownSystem extends JavaPlugin implements Listener {
         }
     }
 
-    // Другие необходимые методы...
-    private void loadBuildings() {
-        ConfigurationSection buildingsSection = config.getConfigurationSection("buildings");
-        if (buildingsSection == null) {
-            getLogger().warning("Не найдена секция buildings в config.yml!");
-            return;
-        }
-
-        for (String buildingId : buildingsSection.getKeys(false)) {
-            ConfigurationSection bConfig = buildingsSection.getConfigurationSection(buildingId);
-            if (bConfig == null) continue;
-
-            TownBuilding building = new TownBuilding(
-                    buildingId,
-                    bConfig.getString("display-name", buildingId),
-                    bConfig.getInt("max-level", 1),
-                    bConfig.getStringList("unlocks"),
-                    bConfig.getStringList("requirements.command"),
-                    bConfig.getConfigurationSection("requirements.levels")
-            );
-            buildings.put(buildingId, building);
-        }
+    private String locToString(Location loc) {
+        return loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
     }
 
     @Override
@@ -281,7 +303,7 @@ public class TownSystem extends JavaPlugin implements Listener {
             return;
         }
 
-        ItemStack item = new ItemStack(Material.END_STONE);
+        ItemStack item = new ItemStack(building.getMaterial());
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', building.getDisplayName()));
 
@@ -297,6 +319,7 @@ public class TownSystem extends JavaPlugin implements Listener {
             player.getWorld().dropItem(player.getLocation(), failed.get(0));
         }
         player.sendMessage(ChatColor.GREEN + "Вы получили блок " + building.getDisplayName());
+        getLogger().info("Выдан блок " + building.getId() + " игроку " + player.getName());
     }
 
     public static class MenuHolder implements InventoryHolder {

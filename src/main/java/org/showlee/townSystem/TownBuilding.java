@@ -1,10 +1,8 @@
 package org.showlee.townSystem;
 
 import org.bukkit.configuration.ConfigurationSection;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-import java.util.Map;
+import org.bukkit.Material;
+import java.util.*;
 
 public class TownBuilding {
     private final String id;
@@ -14,25 +12,27 @@ public class TownBuilding {
     private final List<String> commandRequirements;
     private final Map<Integer, BuildingLevel> levels;
     private final int hitsToBreak;
+    private final Material material;
 
-    public TownBuilding(@NotNull String id, @NotNull String displayName, int maxLevel,
-                        @NotNull List<String> unlocks, @NotNull List<String> commandRequirements,
-                        @NotNull ConfigurationSection config) {
+    public TownBuilding(String id, String displayName, int maxLevel,
+                        List<String> unlocks, List<String> commandRequirements,
+                        ConfigurationSection levelsConfig) {
         this.id = id;
         this.displayName = displayName;
         this.maxLevel = maxLevel;
         this.unlocks = unlocks;
         this.commandRequirements = commandRequirements;
-        this.levels = BuildingLevel.loadLevelsFromConfig(config.getConfigurationSection("levels"));
-        this.hitsToBreak = config.getInt("hits-to-break", 3);
+        this.levels = BuildingLevel.loadLevelsFromConfig(levelsConfig);
+        this.hitsToBreak = levelsConfig.getInt("hits-to-break", 5);
+        this.material = Material.valueOf(levelsConfig.getString("material", "END_STONE"));
     }
 
     // Геттеры
-    public @NotNull String getId() { return id; }
-    public @NotNull String getDisplayName() { return displayName; }
+    public String getId() { return id; }
+    public String getDisplayName() { return displayName; }
     public int getMaxLevel() { return maxLevel; }
-    public @NotNull List<String> getUnlocks() { return unlocks; }
-    public @NotNull List<String> getCommandRequirements() { return commandRequirements; }
-    public @NotNull Map<Integer, BuildingLevel> getLevels() { return levels; }
+    public List<String> getUnlocks() { return unlocks; }
+    public Map<Integer, BuildingLevel> getLevels() { return levels; }
     public int getHitsToBreak() { return hitsToBreak; }
+    public Material getMaterial() { return material; }
 }
