@@ -1,12 +1,11 @@
 package org.showlee.townSystem;
 
+
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class BuildingLevel {
     private final Map<Material, Integer> requiredItems;

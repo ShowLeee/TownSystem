@@ -1,68 +1,103 @@
+# Настройки системы зданий
 buildings:
+  # Основное здание - Ратуша
   townhall:
-    display-name: "§6Ратуша"
-    max-level: 5
+    display-name: "&6Ратуша"  # Отображаемое название
+    material: "END_STONE"     # Материал блока
+    max-level: 5              # Максимальный уровень улучшения
+    hits-to-break: 10         # Количество ударов для разрушения
+    base-health: 100          # Здоровье здания (опционально)
+    
+    # Разблокируемые здания при достижении 1 уровня
     unlocks:
       - "mine"
       - "farm"
       - "wizard_tower"
+    
+    # Требования для улучшения по уровням
     requirements:
+      # Командные требования (например, права)
       command:
-        - "town.leader"
+        - "town.mayor"
+      
+      # Требования по уровням
       levels:
-        1:
-          items:
+        1:  # Для перехода с 0 на 1 уровень
+          items:  # Необходимые предметы
             - "OAK_LOG:64"
             - "STONE:128"
             - "IRON_INGOT:32"
-          money: 1000
-          permissions: []
-        2:
+          money: 1000  # Требуемая сумма денег
+          permissions: []  # Необходимые права
+        
+        2:  # Для перехода с 1 на 2 уровень
           items:
             - "SPRUCE_LOG:64"
             - "COBBLESTONE:128"
-            - "GOLD_INGOT:32"
+            - "GOLD_INGOT:16"
           money: 2500
-          permissions: []
+          permissions:
+            - "town.council"
 
+  # Шахта
   mine:
-    display-name: "§7Шахта"
+    display-name: "&7Шахта"
+    material: "COBBLESTONE"
     max-level: 3
-    unlocks: []
+    hits-to-break: 8
+    base-health: 60
     requirements:
-      command: []
       levels:
         1:
           items:
             - "IRON_PICKAXE:1"
             - "TORCH:32"
           money: 500
-          permissions: []
 
+  # Ферма
   farm:
-    display-name: "§aФерма"
+    display-name: "&aФерма"
+    material: "HAY_BLOCK"
     max-level: 3
-    unlocks: []
+    hits-to-break: 5
     requirements:
-      command: []
       levels:
         1:
           items:
             - "WHEAT_SEEDS:64"
             - "WOODEN_HOE:1"
           money: 300
-          permissions: []
 
+  # Башня чародея
   wizard_tower:
-    display-name: "§5Башня чародея"
+    display-name: "&5Башня Чародея"
+    material: "ENCHANTING_TABLE"
     max-level: 4
-    unlocks: []
+    hits-to-break: 12
     requirements:
-      command: []
       levels:
         1:
           items:
-            - "ENCHANTING_TABLE:1"
             - "BOOKSHELF:16"
+            - "LAPIS_LAZULI:32"
           money: 1500
-          permissions: []
+
+# Настройки системы разрушения
+breaking-system:
+  damage-per-hit: 10          # Урон за 1 удар
+  particle: "BLOCK_CRACK"     # Частицы при ударе
+  sound: "BLOCK_STONE_HIT"    # Звук при ударе
+  rebuild-cooldown: 300       # Время (в секундах) до автоматического восстановления
+
+# Настройки сообщений
+messages:
+  not-owner: "&cТолько владелец может улучшать это здание!"
+  not-enough-resources: "&cНедостаточно ресурсов для улучшения!"
+  building-upgraded: "&aЗдание улучшено до уровня {level}!"
+  building-damaged: "&eПрогресс разрушения: &c{current}&e/&a{max}"
+  building-destroyed: "&4Здание разрушено!"
+
+# Настройки для администраторов
+admin-settings:
+  bypass-protection: false    # Могут ли админы пропускать защиту
+  instant-build: false        # Могут ли мгновенно строить

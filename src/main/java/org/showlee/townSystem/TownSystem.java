@@ -14,6 +14,8 @@ import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.bukkit.Particle;
+import org.bukkit.block.data.BlockData;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,20 +29,27 @@ public class TownSystem extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        // Загружаем конфиг только для чтения
         saveDefaultConfig();
         config = getConfig();
+
+        // Отключаем автосохранение конфига
+        config.options().copyDefaults(true);
+        config.options().header("Этот файл НЕ сохраняет данные зданий");
+
         getServer().getPluginManager().registerEvents(this, this);
-        loadBuildings();
-        loadBuildingData();
-        getLogger().info("TownSystem enabled!");
+        getLogger().info("Данные зданий хранятся только в оперативной памяти!");
     }
 
     @Override
     public void onDisable() {
-        saveBuildingData();
+
         getLogger().info("TownSystem disabled!");
     }
-
+    public void updateConfig() {
+        reloadConfig();
+        config = getConfig();
+    }
     private void loadBuildings() {
         ConfigurationSection buildingsSection = config.getConfigurationSection("buildings");
         if (buildingsSection == null) return;
@@ -167,6 +176,38 @@ public class TownSystem extends JavaPlugin implements Listener {
         }
 
         player.sendMessage(ChatColor.GREEN + "Вы получили блок " + building.getDisplayName() + ChatColor.GREEN + "!");
+    }
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        Block block = event.getBlock();
+        if (block.getType() != Material.END_STONE) return;
+
+        BuildingData data = placedBuildings.get(block.getLocation());
+        if (data == null) return;
+
+        TownBuilding building = buildings.get(data.getBuildingId());
+        if (building == null) return;
+
+        event.setCancelled(true);
+        data.incrementHits();
+
+        // Визуальные эффекты
+        BlockData blockData = block.getBlockData();
+        block.getWorld().spawnParticle(
+                Particle.BLOCK_CRUMBLE,
+                block.getLocation().add(0.5, 0.5, 0.5),
+                10,
+                blockData
+        );
+
+        if (data.getHitsTaken() >= building.getHitsToBreak()) {
+            placedBuildings.remove(block.getLocation());
+            block.setType(Material.AIR);
+            event.getPlayer().sendMessage(ChatColor.GREEN + "Здание разрушено!");
+        } else {
+            event.getPlayer().sendMessage(ChatColor.YELLOW + "Прогресс: " +
+                    data.getHitsTaken() + "/" + building.getHitsToBreak() + " ударов");
+        }
     }
 
     @EventHandler
@@ -372,14 +413,6 @@ public class TownSystem extends JavaPlugin implements Listener {
                 .orElse(null);
     }
 
-    @EventHandler
-    public void onBlockBreak(BlockBreakEvent event) {
-        if (event.getBlock().getType() == Material.END_STONE &&
-                placedBuildings.containsKey(event.getBlock().getLocation())) {
-            event.setCancelled(true);
-            event.getPlayer().sendMessage(ChatColor.RED + "Этот блок нельзя сломать!");
-        }
-    }
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
