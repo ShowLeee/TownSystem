@@ -1,9 +1,14 @@
-org\showlee\townSystem\TownBuilding.class
+org\showlee\townSystem\buildings\TownHall.class
+org\showlee\townSystem\buildings\Building.class
 org\showlee\townSystem\BuildingData.class
-org\showlee\townSystem\BuildingLevel.class
 org\showlee\townSystem\MenuHolder.class
 org\showlee\townSystem\TownBuilding$1.class
 org\showlee\townSystem\TownBuilding$BlockBreakData.class
+org\showlee\townSystem\buildings\ChestListener.class
 org\showlee\townSystem\GiveRatushaCommand.class
 org\showlee\townSystem\TownSystem.class
+org\showlee\townSystem\BuildingManager.class
 org\showlee\townSystem\LocationUtil.class
+org\showlee\townSystem\TownBuilding.class
+org\showlee\townSystem\BuildingLevel.class
+org\showlee\townSystem\buildings\TownHall$TownHallLevel.class

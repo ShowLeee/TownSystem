@@ -37,24 +37,51 @@ buildings:
     break-sound: ENTITY_IRON_GOLEM_DAMAGE
     destroy-sound: ENTITY_IRON_GOLEM_DEATH
     levels:
-      0:
-        display-name: "&7Деревянная ратуша"
+      1:
+        display-name: "Деревянная ратуша"
         resources:
           STONE: 64
           OAK_LOG: 32
-          IRON_INGOT: 16
         rewards:
-          EMERALD: 5
-          IRON_PICKAXE: 1
-      1:
-        display-name: "&fКаменная ратуша"
+          - "mill:1"
+          - "mine:1"
+        chest-limit: 6
+        radius: 5
+      2:
+        display-name: "Каменная ратуша"
         resources:
+          IRON_INGOT: 16
           COBBLESTONE: 128
-          IRON_INGOT: 32
-          GOLD_INGOT: 8
         rewards:
-          EMERALD: 10
-          DIAMOND: 2
+          - "smelter:1"
+        chest-limit: 10
+        radius: 5
+      3:
+        display-name: "Укрепленная ратуша"
+        resources:
+          GOLD_INGOT: 8
+          IRON_BLOCK: 10
+        rewards:
+          - "wizard_tower:1"
+        chest-limit: 14
+        radius: 7
+      4:
+        display-name: "Роскошная ратуша"
+        resources:
+          DIAMOND: 4
+          OBSIDIAN: 20
+        rewards:
+          - "hell_altar:1"
+        chest-limit: 20
+        radius: 10
+      5:
+        display-name: "Эпическая ратуша"
+        resources:
+          NETHERITE_INGOT: 2
+          EMERALD_BLOCK: 8
+        rewards: [ ]
+        chest-limit: 28
+        radius: 10
 
 
 material-names:

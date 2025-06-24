@@ -7,6 +7,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scoreboard.Team;
+import org.showlee.townSystem.buildings.TownHall;
 
 import java.util.*;
 
@@ -14,22 +15,25 @@ public class MenuHolder implements InventoryHolder {
     private final Inventory inventory;
     private final Location location;
     private final TownSystem plugin;
+    private final TownHall townHall;
     private final BuildingData buildingData;
     private final ConfigurationSection buildingConfig;
 
     public MenuHolder(TownSystem plugin, Location location) {
         this.plugin = plugin;
         this.location = location;
+        this.townHall = plugin.getBuildingManager().getTownHallAt(location);
         this.buildingData = plugin.getBuildingData(location);
         this.buildingConfig = plugin.getConfig().getConfigurationSection("buildings." + buildingData.getType());
         this.inventory = Bukkit.createInventory(this, 27, ChatColor.translateAlternateColorCodes('&',
                 buildingConfig.getString("levels." + buildingData.getLevel() + ".display-name")));
+
         setupItems();
     }
 
     private void setupItems() {
-        // Границы меню
-        ItemStack border = createGuiItem(Material.BLACK_STAINED_GLASS_PANE, " ");
+        // Границы
+        ItemStack border = createBorderItem();
         for (int i = 0; i < 9; i++) {
             inventory.setItem(i, border);
             inventory.setItem(i + 18, border);
@@ -37,97 +41,178 @@ public class MenuHolder implements InventoryHolder {
         inventory.setItem(9, border);
         inventory.setItem(17, border);
 
-        // Информация о здании
-        ConfigurationSection levelConfig = buildingConfig.getConfigurationSection("levels." + buildingData.getLevel());
+        // Информация о ратуше
+        inventory.setItem(4, createInfoItem());
 
-        // Иконка здания
-        ItemStack buildingInfo = createGuiItem(
-                Material.STRUCTURE_BLOCK,
-                ChatColor.GOLD + buildingConfig.getString("display-name"),
-                ChatColor.GRAY + "Уровень: " + ChatColor.YELLOW + buildingData.getLevel(),
-                ChatColor.GRAY + "Тип: " + ChatColor.WHITE + buildingData.getType()
-        );
-        inventory.setItem(4, buildingInfo);
-
-        // Кнопка ресурсов
-        ItemStack resourcesBtn = createGuiItem(
-                Material.BOOK,
-                ChatColor.YELLOW + "Требуемые ресурсы",
-                getResourcesLore(levelConfig)
-        );
-        inventory.setItem(11, resourcesBtn);
-
-        // Кнопка сдачи ресурсов
-        ItemStack submitBtn = createGuiItem(
-                Material.HOPPER,
-                ChatColor.GREEN + "Сдать ресурсы",
-                "",
-                ChatColor.GRAY + "Нажмите, чтобы сдать ресурсы",
-                ChatColor.GRAY + "для улучшения здания"
-        );
-        inventory.setItem(13, submitBtn);
-
-        // Кнопка наград
-        ItemStack rewardsBtn = createGuiItem(
-                Material.CHEST,
-                ChatColor.GREEN + "Награды за улучшение",
-                getRewardsLore(levelConfig)
-        );
-        inventory.setItem(15, rewardsBtn);
+        // Кнопка улучшения
+        if (townHall.getLevel() < 5) {
+            inventory.setItem(22, createUpgradeItem());
+        }
 
         // Кнопка закрытия
-        ItemStack closeBtn = createGuiItem(
-                Material.BARRIER,
-                ChatColor.RED + "Закрыть"
-        );
-        inventory.setItem(22, closeBtn);
+        inventory.setItem(26, createCloseItem());
     }
 
-    private String[] getResourcesLore(ConfigurationSection levelConfig) {
+    private ItemStack createBorderItem() {
+        ItemStack border = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+        ItemMeta meta = border.getItemMeta();
+        meta.setDisplayName(" ");
+        border.setItemMeta(meta);
+        return border;
+    }
+
+    private ItemStack createInfoItem() {
+        ConfigurationSection levelConfig = getCurrentLevelConfig();
+
+        ItemStack infoItem = new ItemStack(Material.PAPER);
+        ItemMeta infoMeta = infoItem.getItemMeta();
+        infoMeta.setDisplayName(ChatColor.GOLD + levelConfig.getString("display-name"));
+
         List<String> lore = new ArrayList<>();
-        lore.add("");
-        lore.add(ChatColor.GRAY + "Необходимо для улучшения:");
+        lore.add(ChatColor.GRAY + "Уровень: " + ChatColor.YELLOW + townHall.getLevel());
+        lore.add(ChatColor.GRAY + "Команда: " + ChatColor.YELLOW + townHall.getTeam());
+        lore.add(ChatColor.GRAY + "Сундуков: " + ChatColor.YELLOW +
+                townHall.getCurrentChestCount() + "/" + levelConfig.getInt("chest-limit"));
+        lore.add(ChatColor.GRAY + "Радиус: " + ChatColor.YELLOW + levelConfig.getInt("radius") + " блоков");
 
-        if (levelConfig.contains("resources")) {
-            ConfigurationSection resources = levelConfig.getConfigurationSection("resources");
-            ConfigurationSection materialNames = plugin.getConfig().getConfigurationSection("material-names");
+        infoMeta.setLore(lore);
+        infoItem.setItemMeta(infoMeta);
+        return infoItem;
+    }
 
+    private ItemStack createUpgradeItem() {
+        int nextLevel = townHall.getLevel() + 1;
+        ConfigurationSection nextLevelConfig = getLevelConfig(nextLevel);
+
+        ItemStack upgradeItem = new ItemStack(Material.ANVIL);
+        ItemMeta upgradeMeta = upgradeItem.getItemMeta();
+        upgradeMeta.setDisplayName(ChatColor.GREEN + "Улучшить до " + nextLevelConfig.getString("display-name"));
+
+        List<String> lore = new ArrayList<>();
+        lore.add(ChatColor.GRAY + "Требуется:");
+
+        // Добавляем ресурсы для улучшения
+        ConfigurationSection resources = nextLevelConfig.getConfigurationSection("resources");
+        if (resources != null) {
             for (String material : resources.getKeys(false)) {
-                String displayName = materialNames.getString(material, material); // Получаем русское название
-                lore.add(ChatColor.WHITE + "- " + displayName + ": " + resources.getInt(material));
+                String materialName = plugin.getConfig().getString("material-names." + material, material);
+                lore.add(ChatColor.WHITE + "- " + materialName + ": " + resources.getInt(material));
             }
         }
 
-        return lore.toArray(new String[0]);
-    }
-
-    private String[] getRewardsLore(ConfigurationSection levelConfig) {
-        List<String> lore = new ArrayList<>();
         lore.add("");
-        lore.add(ChatColor.GRAY + "Вы получите:");
+        lore.add(ChatColor.GRAY + "Награда:");
+        for (String reward : nextLevelConfig.getStringList("rewards")) {
+            String[] parts = reward.split(":");
+            String buildingName = parts[0];
+            int amount = parts.length > 1 ? Integer.parseInt(parts[1]) : 1;
 
-        if (levelConfig.contains("rewards")) {
-            ConfigurationSection rewards = levelConfig.getConfigurationSection("rewards");
-            ConfigurationSection materialNames = plugin.getConfig().getConfigurationSection("material-names");
+            String displayName = plugin.getBuildingDisplayName(buildingName);
+            lore.add(ChatColor.GREEN + "- " + displayName + (amount > 1 ? " x" + amount : ""));
+        }
 
-            for (String material : rewards.getKeys(false)) {
-                String displayName = materialNames.getString(material, material);
-                lore.add(ChatColor.WHITE + "- " + displayName + ": " + rewards.getInt(material));
+        upgradeMeta.setLore(lore);
+        upgradeItem.setItemMeta(upgradeMeta);
+        return upgradeItem;
+    }
+
+    private ItemStack createCloseItem() {
+        ItemStack closeItem = new ItemStack(Material.BARRIER);
+        ItemMeta closeMeta = closeItem.getItemMeta();
+        closeMeta.setDisplayName(ChatColor.RED + "Закрыть");
+        closeItem.setItemMeta(closeMeta);
+        return closeItem;
+    }
+
+    private ConfigurationSection getCurrentLevelConfig() {
+        return getLevelConfig(townHall.getLevel());
+    }
+
+    private ConfigurationSection getLevelConfig(int level) {
+        return plugin.getConfig()
+                .getConfigurationSection("buildings.townhall.levels." + level);
+    }
+
+    public void handleClick(InventoryClickEvent event) {
+        event.setCancelled(true);
+
+        if (!(event.getWhoClicked() instanceof Player)) return;
+
+        Player player = (Player) event.getWhoClicked();
+        int slot = event.getSlot();
+
+        if (slot == 22 && event.getCurrentItem() != null &&
+                event.getCurrentItem().getType() == Material.ANVIL) {
+            attemptUpgrade(player);
+        } else if (slot == 26) {
+            player.closeInventory();
+        }
+    }
+
+    private void attemptUpgrade(Player player) {
+        int nextLevel = townHall.getLevel() + 1;
+        ConfigurationSection nextLevelConfig = getLevelConfig(nextLevel);
+
+        if (!hasResources(player, nextLevelConfig.getConfigurationSection("resources"))) {
+            player.sendMessage(ChatColor.RED + "Не хватает ресурсов для улучшения!");
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            return;
+        }
+
+        upgradeTownHall(player, nextLevel, nextLevelConfig);
+    }
+
+    private boolean hasResources(Player player, ConfigurationSection resources) {
+        if (resources == null) return true;
+
+        for (String material : resources.getKeys(false)) {
+            Material mat = Material.matchMaterial(material);
+            if (mat == null) continue;
+
+            if (countItems(player, mat) < resources.getInt(material)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void upgradeTownHall(Player player, int newLevel, ConfigurationSection levelConfig) {
+        // Забираем ресурсы
+        ConfigurationSection resources = levelConfig.getConfigurationSection("resources");
+        if (resources != null) {
+            for (String material : resources.getKeys(false)) {
+                Material mat = Material.matchMaterial(material);
+                if (mat != null) {
+                    removeItems(player, mat, resources.getInt(material));
+                }
             }
         }
 
-        return lore.toArray(new String[0]);
+        // Выполняем улучшение
+        plugin.getBuildingManager().upgradeBuilding(location, player);
+
+        // Выдаем награды
+        giveRewards(player, levelConfig.getStringList("rewards"));
+
+        // Эффекты
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+        player.sendMessage(ChatColor.GREEN + "Ратуша улучшена до уровня " + newLevel + "!");
+
+        // Обновляем меню
+        setupItems();
     }
 
-    private ItemStack createGuiItem(Material material, String name, String... lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
-        meta.setLore(Arrays.asList(lore));
-        item.setItemMeta(meta);
-        return item;
-    }
+    private void giveRewards(Player player, List<String> rewards) {
+        for (String reward : rewards) {
+            String[] parts = reward.split(":");
+            String buildingName = parts[0];
+            int amount = parts.length > 1 ? Integer.parseInt(parts[1]) : 1;
 
+            ItemStack item = plugin.getBuildingItem(buildingName);
+            item.setAmount(amount);
+            player.getInventory().addItem(item);
+        }
+    }
     public void open(Player player) {
         if (buildingData == null) {
             player.sendMessage(ChatColor.RED + "Ошибка: данные здания не найдены!");
@@ -144,92 +229,6 @@ public class MenuHolder implements InventoryHolder {
 
         player.openInventory(inventory);
     }
-
-    public void handleClick(InventoryClickEvent event) {
-        event.setCancelled(true);
-
-        if (!(event.getWhoClicked() instanceof Player)) return;
-
-        Player player = (Player) event.getWhoClicked();
-        int slot = event.getSlot();
-
-        switch (slot) {
-            case 13: // Кнопка сдачи ресурсов
-                handleResourceSubmit(player);
-                break;
-            case 22: // Кнопка закрытия
-                player.closeInventory();
-                break;
-        }
-    }
-
-    private void handleResourceSubmit(Player player) {
-        ConfigurationSection levelConfig = buildingConfig.getConfigurationSection("levels." + buildingData.getLevel());
-
-        // Проверка ресурсов
-        if (!hasRequiredResources(player, levelConfig.getConfigurationSection("resources"))) {
-            player.sendMessage(ChatColor.RED + "У вас недостаточно ресурсов для улучшения!");
-            return;
-        }
-
-        // Забрать ресурсы
-        takeResources(player, levelConfig.getConfigurationSection("resources"));
-
-        // Улучшить здание
-        buildingData.setLevel(buildingData.getLevel() + 1);
-        plugin.updateBuildingData(buildingData);
-
-        // Выдать награды
-        giveRewards(player, levelConfig.getConfigurationSection("rewards"));
-
-        player.sendMessage(ChatColor.GREEN + "Здание улучшено до уровня " + buildingData.getLevel() + "!");
-        player.closeInventory();
-    }
-
-    private boolean hasRequiredResources(Player player, ConfigurationSection resources) {
-        if (resources == null) return true;
-
-        for (String material : resources.getKeys(false)) {
-            Material mat = Material.matchMaterial(material);
-            if (mat == null) continue;
-
-            if (countItems(player, mat) < resources.getInt(material)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private void takeResources(Player player, ConfigurationSection resources) {
-        if (resources == null) return;
-
-        for (String material : resources.getKeys(false)) {
-            Material mat = Material.matchMaterial(material);
-            if (mat == null) continue;
-
-            int amount = resources.getInt(material);
-            for (ItemStack item : player.getInventory()) {
-                if (item != null && item.getType() == mat) {
-                    int remove = Math.min(amount, item.getAmount());
-                    item.setAmount(item.getAmount() - remove);
-                    amount -= remove;
-                    if (amount <= 0) break;
-                }
-            }
-        }
-    }
-
-    private void giveRewards(Player player, ConfigurationSection rewards) {
-        if (rewards == null) return;
-
-        for (String material : rewards.getKeys(false)) {
-            Material mat = Material.matchMaterial(material);
-            if (mat == null) continue;
-
-            player.getInventory().addItem(new ItemStack(mat, rewards.getInt(material)));
-        }
-    }
-
     private int countItems(Player player, Material material) {
         int count = 0;
         for (ItemStack item : player.getInventory()) {
@@ -238,6 +237,17 @@ public class MenuHolder implements InventoryHolder {
             }
         }
         return count;
+    }
+
+    private void removeItems(Player player, Material material, int amount) {
+        for (ItemStack item : player.getInventory()) {
+            if (item != null && item.getType() == material) {
+                int remove = Math.min(amount, item.getAmount());
+                item.setAmount(item.getAmount() - remove);
+                amount -= remove;
+                if (amount <= 0) break;
+            }
+        }
     }
 
     @Override

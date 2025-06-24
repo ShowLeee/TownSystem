@@ -5,6 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.ChatColor;
 
@@ -61,8 +62,21 @@ public class TownSystem extends JavaPlugin {
         return buildingItemName;
     }
     public ItemStack getBuildingItem(String type) {
-        // Возвращает ItemStack для указанного типа здания
-        return null;
+        ConfigurationSection config = getConfig().getConfigurationSection("buildings." + type);
+        if (config == null) return new ItemStack(Material.BARRIER);
+
+        Material material = Material.matchMaterial(config.getString("material", "BARRIER"));
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.setDisplayName(ChatColor.translateAlternateColorCodes('&',
+                config.getString("display-name", type)));
+
+        item.setItemMeta(meta);
+        return item;
+    }
+    public String getBuildingDisplayName(String type) {
+        return getConfig().getString("buildings." + type + ".display-name", type);
     }
     public String getTeamDisplayName(String team) {
         return teamDisplayNames.getOrDefault(team, team);
@@ -118,4 +132,5 @@ public class TownSystem extends JavaPlugin {
     private void loadBuildingData() {
         // Реализация загрузки данных зданий
     }
+    
 }

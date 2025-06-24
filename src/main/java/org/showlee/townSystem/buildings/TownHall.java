@@ -2,6 +2,7 @@ package org.showlee.townSystem.buildings;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.ItemStack;
@@ -13,6 +14,7 @@ import java.util.*;
 
 public class TownHall extends Building {
     private static final Map<Integer, TownHallLevel> LEVELS = new HashMap<>();
+
 
     static {
         LEVELS.put(1, new TownHallLevel(5, 6, Arrays.asList("mill", "mine")));
@@ -27,7 +29,19 @@ public class TownHall extends Building {
     public TownHall(Location location, String team) {
         super(location, team);
     }
-
+    public int getCurrentChestCount() {
+        return chests.size();
+    }
+    public int getMaxChests() {
+        ConfigurationSection config = TownSystem.getInstance().getConfig()
+                .getConfigurationSection("buildings.townhall.levels." + level);
+        return config != null ? config.getInt("chest-limit", 0) : 0;
+    }
+    public int getCurrentRadius() {
+        ConfigurationSection config = TownSystem.getInstance().getConfig()
+                .getConfigurationSection("buildings.townhall.levels." + level);
+        return config != null ? config.getInt("radius", 0) : 0;
+    }
     @Override
     public void onPlace(Player player) {
         player.sendMessage(ChatColor.GREEN + "Вы построили ратушу!");
